@@ -6,51 +6,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: sans-serif;
-      background: #111;
-      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #1a1a1a, #0a0a0a);
+      color: #fff;
       text-align: center;
-      padding: 20px;
+      padding: 30px 20px;
     }
+
     h1 {
-      margin-top: 0;
-      font-size: 24px;
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #00d9ff;
+      text-shadow: 0 0 5px #00f0ff;
     }
+
+    .dice-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+
     .dice {
-      font-size: 70px;
-      margin: 20px;
-      filter: drop-shadow(3px 3px 4px black);
-      transform: rotateX(15deg) rotateY(15deg);
-      display: inline-block;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      box-shadow:
+        4px 4px 10px rgba(0,0,0,0.6),
+        inset -2px -2px 6px rgba(255,255,255,0.05),
+        inset 2px 2px 6px rgba(0,0,0,0.7);
+      transform: rotateX(25deg) rotateY(20deg);
+      transition: all 0.3s ease;
     }
+
+    .result {
+      font-size: 22px;
+      color: #eeeeee;
+      margin: 10px 0 25px;
+      text-shadow: 0 0 5px rgba(255,255,255,0.2);
+    }
+
     button {
       font-size: 18px;
-      padding: 10px 20px;
-      margin-top: 20px;
+      padding: 12px 30px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #00bfff;
-      color: white;
+      color: #fff;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 191, 255, 0.4);
+      transition: background 0.2s ease, transform 0.2s ease;
     }
-    #result {
-      margin-top: 10px;
-      font-size: 18px;
+
+    button:hover {
+      background: #00a6e6;
+      transform: scale(1.03);
+    }
+
+    footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
     }
   </style>
 </head>
 <body>
-  <h1>🎲 Брось кубики!</h1>
+  <h1>🎲 Игра в кубики</h1>
 
-  <div>
+  <div class="dice-container">
     <div class="dice" id="dice1">⚀</div>
     <div class="dice" id="dice2">⚀</div>
   </div>
 
-  <div id="result">Сумма: 2</div>
+  <div class="result" id="result">Сумма: 2 (чёт)</div>
 
-  <button onclick="rollDice()">Бросить снова</button>
+  <button onclick="rollDice()">Бросить кубики</button>
+
+  <footer>Удачи! Не забудь выбрать свою стратегию 😉</footer>
 
   <script>
     const tg = window.Telegram.WebApp;
@@ -61,10 +103,12 @@
     function rollDice() {
       const d1 = Math.floor(Math.random() * 6) + 1;
       const d2 = Math.floor(Math.random() * 6) + 1;
+      const sum = d1 + d2;
+      const parity = sum % 2 === 0 ? "чёт" : "нечёт";
 
       document.getElementById("dice1").textContent = faces[d1 - 1];
       document.getElementById("dice2").textContent = faces[d2 - 1];
-      document.getElementById("result").textContent = `Сумма: ${d1 + d2} (${(d1 + d2) % 2 === 0 ? "чёт" : "нечёт"})`;
+      document.getElementById("result").textContent = `Сумма: ${sum} (${parity})`;
     }
   </script>
 </body>
