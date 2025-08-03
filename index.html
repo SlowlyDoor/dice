@@ -19,7 +19,7 @@
     }
 
     h1 {
-      font-size: 28px;
+      font-size: 26px;
       margin-bottom: 20px;
       color: #00d9ff;
       text-shadow: 0 0 5px #00f0ff;
@@ -28,15 +28,16 @@
     .dice-container {
       display: flex;
       justify-content: center;
-      gap: 30px;
+      gap: 40px;
       margin-bottom: 20px;
+      perspective: 1000px;
     }
 
     .dice {
       width: 80px;
       height: 80px;
-      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-      border-radius: 15px;
+      background: linear-gradient(145deg, #333, #111);
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -45,15 +46,25 @@
         4px 4px 10px rgba(0,0,0,0.6),
         inset -2px -2px 6px rgba(255,255,255,0.05),
         inset 2px 2px 6px rgba(0,0,0,0.7);
-      transform: rotateX(25deg) rotateY(20deg);
-      transition: all 0.3s ease;
+      transform: rotateX(35deg) rotateY(25deg);
+      transition: all 0.4s ease;
     }
 
     .result {
-      font-size: 22px;
-      color: #eeeeee;
-      margin: 10px 0 25px;
+      font-size: 20px;
+      color: #eee;
+      margin: 10px 0;
       text-shadow: 0 0 5px rgba(255,255,255,0.2);
+    }
+
+    select {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 10px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      margin-bottom: 20px;
     }
 
     button {
@@ -83,12 +94,21 @@
 <body>
   <h1>🎲 Игра в кубики</h1>
 
+  <label for="bet">Ставка:</label><br>
+  <select id="bet">
+    <option value="even">Чёт</option>
+    <option value="odd">Нечёт</option>
+    <option value="low">2 – 6</option>
+    <option value="high">7 – 12</option>
+  </select>
+
   <div class="dice-container">
     <div class="dice" id="dice1">⚀</div>
     <div class="dice" id="dice2">⚀</div>
   </div>
 
-  <div class="result" id="result">Сумма: 2 (чёт)</div>
+  <div class="result" id="result">Сумма: 2</div>
+  <div class="result" id="outcome"></div>
 
   <button onclick="rollDice()">Бросить кубики</button>
 
@@ -104,11 +124,21 @@
       const d1 = Math.floor(Math.random() * 6) + 1;
       const d2 = Math.floor(Math.random() * 6) + 1;
       const sum = d1 + d2;
-      const parity = sum % 2 === 0 ? "чёт" : "нечёт";
 
       document.getElementById("dice1").textContent = faces[d1 - 1];
       document.getElementById("dice2").textContent = faces[d2 - 1];
-      document.getElementById("result").textContent = `Сумма: ${sum} (${parity})`;
+
+      const bet = document.getElementById("bet").value;
+      let outcome = "";
+
+      if (bet === "even" && sum % 2 === 0) outcome = "✅ Победа (чёт)";
+      else if (bet === "odd" && sum % 2 !== 0) outcome = "✅ Победа (нечёт)";
+      else if (bet === "low" && sum >= 2 && sum <= 6) outcome = "✅ Победа (2–6)";
+      else if (bet === "high" && sum >= 7 && sum <= 12) outcome = "✅ Победа (7–12)";
+      else outcome = "❌ Проигрыш";
+
+      document.getElementById("result").textContent = `Сумма: ${sum}`;
+      document.getElementById("outcome").textContent = outcome;
     }
   </script>
 </body>
