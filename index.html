@@ -2,52 +2,69 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Игра с кубиками</title>
+  <title>🎲 Кубики</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
+      font-family: sans-serif;
       background: #111;
       color: white;
       text-align: center;
-      font-family: sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
     }
     .dice {
-      font-size: 60px;
+      font-size: 70px;
       margin: 20px;
+      filter: drop-shadow(3px 3px 4px black);
+      transform: rotateX(15deg) rotateY(15deg);
+      display: inline-block;
     }
     button {
-      font-size: 20px;
+      font-size: 18px;
       padding: 10px 20px;
-      background: #0af;
+      margin-top: 20px;
       border: none;
       border-radius: 10px;
+      background: #00bfff;
       color: white;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 10px;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-  <h2>🎲 Бросок кубиков</h2>
-  <div class="dice" id="dice">⚀ ⚁</div>
-  <button onclick="roll()">Бросить</button>
+  <h1>🎲 Брось кубики!</h1>
+
+  <div>
+    <div class="dice" id="dice1">⚀</div>
+    <div class="dice" id="dice2">⚀</div>
+  </div>
+
+  <div id="result">Сумма: 2</div>
+
+  <button onclick="rollDice()">Бросить снова</button>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    function roll() {
+    const faces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+    function rollDice() {
       const d1 = Math.floor(Math.random() * 6) + 1;
       const d2 = Math.floor(Math.random() * 6) + 1;
-      const sum = d1 + d2;
-      const result = {
-        d1,
-        d2,
-        sum,
-        outcome: sum % 2 === 0 ? "чёт" : "нечёт"
-      };
 
-      document.getElementById("dice").textContent = ["⚀","⚁","⚂","⚃","⚄","⚅"][d1-1] + " " + ["⚀","⚁","⚂","⚃","⚄","⚅"][d2-1];
-
+      document.getElementById("dice1").textContent = faces[d1 - 1];
+      document.getElementById("dice2").textContent = faces[d2 - 1];
+      document.getElementById("result").textContent = `Сумма: ${d1 + d2} (${(d1 + d2) % 2 === 0 ? "чёт" : "нечёт"})`;
     }
   </script>
 </body>
