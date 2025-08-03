@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>🎲 Бросок кубиков</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #222;
+      color: white;
+    }
+    .dice {
+      display: inline-block;
+      font-size: 60px;
+      margin: 10px;
+      filter: drop-shadow(3px 3px 4px black);
+      transform: rotateX(20deg) rotateY(10deg);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background: #00bfff;
+      color: white;
+    }
+    select {
+      padding: 5px;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎲 Выберите ставку</h2>
+  <select id="bet">
+    <option value="even">Чёт</option>
+    <option value="odd">Нечёт</option>
+    <option value="1-6">От 2 до 6</option>
+    <option value="7-12">От 7 до 12</option>
+  </select><br><br>
+
+  <button onclick="rollDice()">Бросить кубики</button>
+
+  <div id="result" style="margin-top:20px;"></div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    function getDiceFace(num) {
+      return ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][num - 1];
+    }
+
+    function rollDice() {
+      const d1 = Math.floor(Math.random() * 6) + 1;
+      const d2 = Math.floor(Math.random() * 6) + 1;
+      const sum = d1 + d2;
+      const bet = document.getElementById("bet").value;
+      let outcome = "";
+
+      if (bet === "even" && sum % 2 === 0) outcome = "✅ Победа (чёт)";
+      else if (bet === "odd" && sum % 2 !== 0) outcome = "✅ Победа (нечёт)";
+      else if (bet === "1-6" && sum >= 2 && sum <= 6) outcome = "✅ Победа (от 2 до 6)";
+      else if (bet === "7-12" && sum >= 7 && sum <= 12) outcome = "✅ Победа (от 7 до 12)";
+      else outcome = "❌ Проигрыш";
+
+      const html = `
+        <div class="dice">${getDiceFace(d1)}</div>
+        <div class="dice">${getDiceFace(d2)}</div>
+        <p>Сумма: ${sum}</p>
+        <h3>${outcome}</h3>
+      `;
+      document.getElementById("result").innerHTML = html;
+
+      tg.sendData(JSON.stringify({
+        d1, d2, sum, bet, outcome
+      }));
+    }
+  </script>
+</body>
+</html>
