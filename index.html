@@ -2,132 +2,128 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>🎲 Кубики</title>
+  <title>3D Кубики</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <style>
-    * {
+    body {
+      margin: 0;
+      background: radial-gradient(#1a1a1a, #000);
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    #scene {
+      width: 100vw;
+      height: 60vh;
+      display: block;
+    }
+
+    #controls {
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.6);
+      position: absolute;
+      bottom: 0;
+      width: 100%;
       box-sizing: border-box;
     }
 
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(circle at center, #1a1a1a, #0a0a0a);
-      color: #fff;
-      text-align: center;
-      padding: 30px 20px;
-    }
-
-    h1 {
-      font-size: 26px;
-      margin-bottom: 20px;
-      color: #00d9ff;
-      text-shadow: 0 0 5px #00f0ff;
-    }
-
-    .dice-container {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-bottom: 20px;
-      perspective: 1000px;
-    }
-
-    .dice {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(145deg, #333, #111);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 50px;
-      box-shadow:
-        4px 4px 10px rgba(0,0,0,0.6),
-        inset -2px -2px 6px rgba(255,255,255,0.05),
-        inset 2px 2px 6px rgba(0,0,0,0.7);
-      transform: rotateX(35deg) rotateY(25deg);
-      transition: all 0.4s ease;
-    }
-
-    .result {
-      font-size: 20px;
-      color: #eee;
-      margin: 10px 0;
-      text-shadow: 0 0 5px rgba(255,255,255,0.2);
-    }
-
-    select {
+    select, button {
       padding: 10px;
       font-size: 16px;
+      margin: 10px;
       border-radius: 10px;
-      background: #222;
-      color: #fff;
-      border: 1px solid #555;
-      margin-bottom: 20px;
-    }
-
-    button {
-      font-size: 18px;
-      padding: 12px 30px;
       border: none;
-      border-radius: 12px;
       background: #00bfff;
-      color: #fff;
+      color: white;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 191, 255, 0.4);
-      transition: background 0.2s ease, transform 0.2s ease;
     }
 
-    button:hover {
-      background: #00a6e6;
-      transform: scale(1.03);
-    }
-
-    footer {
-      margin-top: 30px;
-      font-size: 14px;
-      color: #888;
+    #result {
+      font-size: 18px;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
-  <h1>🎲 Игра в кубики</h1>
+  <canvas id="scene"></canvas>
 
-  <label for="bet">Ставка:</label><br>
-  <select id="bet">
-    <option value="even">Чёт</option>
-    <option value="odd">Нечёт</option>
-    <option value="low">2 – 6</option>
-    <option value="high">7 – 12</option>
-  </select>
-
-  <div class="dice-container">
-    <div class="dice" id="dice1">⚀</div>
-    <div class="dice" id="dice2">⚀</div>
+  <div id="controls">
+    <label for="bet">Ставка:</label>
+    <select id="bet">
+      <option value="even">Чёт</option>
+      <option value="odd">Нечёт</option>
+      <option value="low">2–6</option>
+      <option value="high">7–12</option>
+    </select>
+    <button onclick="rollDice()">🎲 Бросить кубики</button>
+    <div id="result">Ожидание броска…</div>
   </div>
 
-  <div class="result" id="result">Сумма: 2</div>
-  <div class="result" id="outcome"></div>
-
-  <button onclick="rollDice()">Бросить кубики</button>
-
-  <footer>Удачи! Не забудь выбрать свою стратегию 😉</footer>
-
   <script>
-    const tg = window.Telegram.WebApp;
+    const tg = Telegram.WebApp;
     tg.expand();
 
-    const faces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+    let scene = new THREE.Scene();
+    let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    let renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('scene'), alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight * 0.6);
+
+    // Свет
+    const light = new THREE.PointLight(0xffffff, 1.5);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+    // Материал с цифрами (пока простые цвета)
+    const materials = (value) => new THREE.MeshStandardMaterial({ color: value });
+
+    // Куб 1
+    let dice1 = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      [
+        materials(0xff5555), // 1
+        materials(0x55ff55), // 2
+        materials(0x5555ff), // 3
+        materials(0xffff55), // 4
+        materials(0xff55ff), // 5
+        materials(0x55ffff), // 6
+      ]
+    );
+
+    // Куб 2 (копия)
+    let dice2 = dice1.clone();
+
+    dice1.position.x = -1.5;
+    dice2.position.x = 1.5;
+
+    scene.add(dice1);
+    scene.add(dice2);
+
+    camera.position.z = 5;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    function getRandomRotation() {
+      return Math.PI * 2 * Math.random();
+    }
 
     function rollDice() {
+      // Вращаем кубики
+      dice1.rotation.x += getRandomRotation();
+      dice1.rotation.y += getRandomRotation();
+      dice2.rotation.x += getRandomRotation();
+      dice2.rotation.y += getRandomRotation();
+
       const d1 = Math.floor(Math.random() * 6) + 1;
       const d2 = Math.floor(Math.random() * 6) + 1;
       const sum = d1 + d2;
-
-      document.getElementById("dice1").textContent = faces[d1 - 1];
-      document.getElementById("dice2").textContent = faces[d2 - 1];
-
       const bet = document.getElementById("bet").value;
       let outcome = "";
 
@@ -137,8 +133,7 @@
       else if (bet === "high" && sum >= 7 && sum <= 12) outcome = "✅ Победа (7–12)";
       else outcome = "❌ Проигрыш";
 
-      document.getElementById("result").textContent = `Сумма: ${sum}`;
-      document.getElementById("outcome").textContent = outcome;
+      document.getElementById("result").textContent = `Сумма: ${sum} — ${outcome}`;
     }
   </script>
 </body>
