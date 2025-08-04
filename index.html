@@ -2,133 +2,115 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>🎲 3D Кубик</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🎲 3D Кубики</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/makimenko/dice/dice.min.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
-      background: radial-gradient(#111, #000);
+      padding: 0;
+      background: radial-gradient(#222, #000);
+      color: white;
+      font-family: sans-serif;
       overflow: hidden;
     }
-    #scene {
+
+    #canvas {
       width: 100vw;
-      height: 100vh;
+      height: 60vh;
       display: block;
     }
-    #ui {
+
+    #controls {
       position: absolute;
-      bottom: 20px;
+      bottom: 0;
       width: 100%;
+      background: rgba(0,0,0,0.6);
+      padding: 15px;
+      box-sizing: border-box;
       text-align: center;
     }
-    button {
-      font-size: 18px;
-      padding: 10px 20px;
+
+    select, button {
+      padding: 10px;
+      font-size: 16px;
       margin: 10px;
-      border: none;
       border-radius: 8px;
+      border: none;
+    }
+
+    select {
+      background: #333;
+      color: white;
+    }
+
+    button {
       background: #00bfff;
       color: white;
       cursor: pointer;
     }
+
     #result {
-      color: white;
-      font-size: 20px;
+      margin-top: 5px;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-<canvas id="scene"></canvas>
+  <div id="canvas"></div>
 
-<div id="ui">
-  <button onclick="rollDice()">🎲 Бросить</button>
-  <div id="result">Ожидание...</div>
-</div>
+  <div id="controls">
+    <label for="bet">Ставка:</label>
+    <select id="bet">
+      <option value="even">Чёт</option>
+      <option value="odd">Нечёт</option>
+      <option value="low">2–6</option>
+      <option value="high">7–12</option>
+    </select>
+    <button onclick="roll()">🎲 Бросить</button>
+    <div id="result">Ожидание броска...</div>
+  </div>
 
-<script>
-const tg = Telegram.WebApp;
-tg.expand();
+  <script>
+    const tg = Telegram.WebApp;
+    tg.expand();
 
-// Сцена
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("scene"), alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+    const diceBox = new DiceBox("#canvas", {
+      w: window.innerWidth,
+      h: window.innerHeight * 0.6,
+      scale: 1.2,
+      theme: "dark",
+    });
 
-// Свет
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(2, 3, 5);
-scene.add(light);
+    diceBox.init().then(() => {
+      console.log("🎲 DiceBox инициализирован");
+    });
 
-// Грани с точками (можно заменить на PNG-текстуры)
-const createDotTexture = (count) => {
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, 128, 128);
-  ctx.fillStyle = 'black';
-  const drawDot = (x, y) => ctx.beginPath(), ctx.arc(x, y, 10, 0, 2*Math.PI), ctx.fill();
-  const pos = [[64,64], [32,32],[96,96], [32,96],[96,32], [64,32],[64,96]];
-  if(count === 1) drawDot(...pos[0]);
-  if(count === 2) pos.slice(1,3).forEach(p=>drawDot(...p));
-  if(count === 3) [0,1,2].forEach(i=>drawDot(...pos[i]));
-  if(count === 4) pos.slice(1,5).forEach(p=>drawDot(...p));
-  if(count === 5) [...pos.slice(1,5),pos[0]].forEach(p=>drawDot(...p));
-  if(count === 6) pos.slice(1).forEach(p=>drawDot(...p));
-  const texture = new THREE.CanvasTexture(canvas);
-  return new THREE.MeshStandardMaterial({ map: texture });
-};
+    function roll() {
+      document.getElementById("result").textContent = "Бросаем кубики...";
+      const bet = document.getElementById("bet").value;
 
-// Куб
-const diceMaterials = [
-  createDotTexture(1), // Right
-  createDotTexture(6), // Left
-  createDotTexture(3), // Top
-  createDotTexture(4), // Bottom
-  createDotTexture(2), // Front
-  createDotTexture(5), // Back
-];
+      // Генерируем случайные значения 1–6 для двух кубов
+      const d1 = Math.floor(Math.random() * 6) + 1;
+      const d2 = Math.floor(Math.random() * 6) + 1;
+      const sum = d1 + d2;
 
-const dice = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), diceMaterials);
-scene.add(dice);
+      // Показываем анимированный бросок
+      diceBox.roll([d1, d2]);
 
-// Обновление сцены
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-animate();
+      // После анимации (~3 секунды) — показать результат
+      setTimeout(() => {
+        let outcome = "";
+        if (bet === "even" && sum % 2 === 0) outcome = "✅ Победа (чёт)";
+        else if (bet === "odd" && sum % 2 !== 0) outcome = "✅ Победа (нечёт)";
+        else if (bet === "low" && sum >= 2 && sum <= 6) outcome = "✅ Победа (2–6)";
+        else if (bet === "high" && sum >= 7 && sum <= 12) outcome = "✅ Победа (7–12)";
+        else outcome = "❌ Проигрыш";
 
-// Повороты куба к нужной грани
-const faceRotations = {
-  1: { x: 0, y: 0 },
-  2: { x: 0, y: Math.PI },
-  3: { x: -Math.PI / 2, y: 0 },
-  4: { x: Math.PI / 2, y: 0 },
-  5: { x: 0, y: -Math.PI / 2 },
-  6: { x: 0, y: Math.PI / 2 },
-};
-
-// Анимация броска
-function rollDice() {
-  const face = Math.floor(Math.random() * 6) + 1;
-  const target = faceRotations[face];
-
-  gsap.to(dice.rotation, {
-    x: target.x + Math.PI * 6,
-    y: target.y + Math.PI * 6,
-    duration: 2,
-    ease: "power2.out",
-    onComplete: () => {
-      document.getElementById("result").textContent = `Выпало: ${face}`;
+        document.getElementById("result").textContent = `Сумма: ${sum} — ${outcome}`;
+      }, 3000);
     }
-  });
-}
-</script>
+  </script>
 </body>
 </html>
